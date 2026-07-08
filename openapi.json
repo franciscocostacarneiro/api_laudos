@@ -1,0 +1,1689 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API Laudos de Avaliação de Imóveis (CEF)",
+    "description": "REST API for querying real estate valuation reports (laudos) extracted from Caixa Econômica Federal (SIMIL) PDFs for the Região Metropolitana de Belo Horizonte (MG), Brazil.",
+    "contact": {
+      "name": "Francisco Costa Carneiro",
+      "url": "https://www.gov.br/caixa"
+    },
+    "license": {
+      "name": "Restricted — CEF internal data",
+      "url": "https://www.gov.br/caixa"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check",
+        "description": "Returns service health, current version and number of loaded reports.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/info": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Dataset and API metadata",
+        "description": "Returns metadata about the API and the underlying dataset.",
+        "operationId": "info_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/laudos": {
+      "get": {
+        "tags": [
+          "Laudos"
+        ],
+        "summary": "List valuation reports (laudos)",
+        "description": "Returns a paginated list of real estate valuation reports (laudos). Supports filtering by category, location, value and area ranges, reference date, and free-text search. Sort by any whitelisted field.",
+        "operationId": "list_laudos_api_v1_laudos_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed).",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)."
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Items per page (1-100).",
+              "default": 20,
+              "title": "Pagesize"
+            },
+            "description": "Items per page (1-100)."
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort field. One of: areaAvaliacaoM2, bairro, dataReferenciaAvaliacao, id, municipio, numeroLaudo, valorAvaliacaoReais",
+              "default": "id",
+              "title": "Sortby"
+            },
+            "description": "Sort field. One of: areaAvaliacaoM2, bairro, dataReferenciaAvaliacao, id, municipio, numeroLaudo, valorAvaliacaoReais"
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort order: 'asc' or 'desc'.",
+              "default": "asc",
+              "title": "Sortorder"
+            },
+            "description": "Sort order: 'asc' or 'desc'."
+          },
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Property category: 'Apartamento', 'Casa' or 'Lote'.",
+              "title": "Categoria"
+            },
+            "description": "Property category: 'Apartamento', 'Casa' or 'Lote'."
+          },
+          {
+            "name": "uf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Federation unit (state), e.g. 'MG'.",
+              "title": "Uf"
+            },
+            "description": "Federation unit (state), e.g. 'MG'."
+          },
+          {
+            "name": "municipio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Municipality name (case-insensitive).",
+              "title": "Municipio"
+            },
+            "description": "Municipality name (case-insensitive)."
+          },
+          {
+            "name": "bairro",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Neighborhood name (case-insensitive).",
+              "title": "Bairro"
+            },
+            "description": "Neighborhood name (case-insensitive)."
+          },
+          {
+            "name": "grupoLaudo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Report group: 'Unidade em Prédio', 'Unidade Isolada Construção' or 'Unidade Isolada Terreno'.",
+              "title": "Grupolaudo"
+            },
+            "description": "Report group: 'Unidade em Prédio', 'Unidade Isolada Construção' or 'Unidade Isolada Terreno'."
+          },
+          {
+            "name": "valorMin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum appraisal value in BRL.",
+              "title": "Valormin"
+            },
+            "description": "Minimum appraisal value in BRL."
+          },
+          {
+            "name": "valorMax",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum appraisal value in BRL.",
+              "title": "Valormax"
+            },
+            "description": "Maximum appraisal value in BRL."
+          },
+          {
+            "name": "areaMin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum evaluation area in m².",
+              "title": "Areamin"
+            },
+            "description": "Minimum evaluation area in m²."
+          },
+          {
+            "name": "areaMax",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum evaluation area in m².",
+              "title": "Areamax"
+            },
+            "description": "Maximum evaluation area in m²."
+          },
+          {
+            "name": "dataInicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Reference date lower bound (DD/MM/YYYY).",
+              "title": "Datainicio"
+            },
+            "description": "Reference date lower bound (DD/MM/YYYY)."
+          },
+          {
+            "name": "dataFim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Reference date upper bound (DD/MM/YYYY).",
+              "title": "Datafim"
+            },
+            "description": "Reference date upper bound (DD/MM/YYYY)."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free-text search across numero, bairro, endereco and municipio.",
+              "title": "Q"
+            },
+            "description": "Free-text search across numero, bairro, endereco and municipio."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLaudos"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error for query parameters."
+          }
+        }
+      }
+    },
+    "/api/v1/laudos/stats": {
+      "get": {
+        "tags": [
+          "Laudos"
+        ],
+        "summary": "Aggregate statistics over the dataset",
+        "description": "Returns aggregate statistics: counts and value averages by category and municipality, plus min/max/mean/median for unit value (R$/m²) and total appraisal value (R$).",
+        "operationId": "get_stats_api_v1_laudos_stats_get",
+        "parameters": [
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter stats by property category.",
+              "title": "Categoria"
+            },
+            "description": "Filter stats by property category."
+          },
+          {
+            "name": "municipio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter stats by municipality.",
+              "title": "Municipio"
+            },
+            "description": "Filter stats by municipality."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/laudos/{laudoId}": {
+      "get": {
+        "tags": [
+          "Laudos"
+        ],
+        "summary": "Get a single valuation report by ID",
+        "description": "Returns the full representation of a single laudo by its internal sequential ID.",
+        "operationId": "get_laudo_api_v1_laudos__laudoId__get",
+        "parameters": [
+          {
+            "name": "laudoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Laudoid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Laudo"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No laudo with the given ID exists."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CategoryBreakdownItem": {
+        "properties": {
+          "categoria": {
+            "type": "string",
+            "title": "Categoria",
+            "description": "Property category."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of reports in this category."
+          },
+          "totalValorAvaliacaoReais": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totalvaloravaliacaoreais",
+            "description": "Sum of appraisal values in BRL."
+          },
+          "valorMedioReais": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valormedioreais",
+            "description": "Mean appraisal value in BRL."
+          },
+          "valorMedioPorM2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valormedioporm2",
+            "description": "Mean unit value (R$/m²)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoria",
+          "count"
+        ],
+        "title": "CategoryBreakdownItem"
+      },
+      "CoordinatesInfo": {
+        "properties": {
+          "latitudeHemisferio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitudehemisferio",
+            "description": "Latitude hemisphere, e.g. 'Sul'."
+          },
+          "latitudeGraus": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitudegraus",
+            "description": "Latitude degrees."
+          },
+          "latitudeMin": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitudemin",
+            "description": "Latitude minutes."
+          },
+          "latitudeSeg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitudeseg",
+            "description": "Latitude seconds (decimal)."
+          },
+          "longitudeGraus": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitudegraus",
+            "description": "Longitude degrees."
+          },
+          "longitudeMin": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitudemin",
+            "description": "Longitude minutes."
+          },
+          "longitudeSeg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitudeseg",
+            "description": "Longitude seconds (decimal)."
+          },
+          "datum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datum",
+            "description": "Geodetic datum, e.g. 'SAD69'."
+          }
+        },
+        "type": "object",
+        "title": "CoordinatesInfo"
+      },
+      "EmpresaInfo": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome",
+            "description": "Appraisal company name."
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj",
+            "description": "Company CNPJ."
+          },
+          "representanteLegalNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representantelegalnome",
+            "description": "Legal representative's name."
+          },
+          "representanteLegalCpf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Representantelegalcpf",
+            "description": "Legal representative's CPF (sensitive)."
+          }
+        },
+        "type": "object",
+        "title": "EmpresaInfo"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "'ok' when the service is healthy."
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version."
+          },
+          "reportsLoaded": {
+            "type": "integer",
+            "title": "Reportsloaded",
+            "description": "Number of reports loaded in memory."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "reportsLoaded"
+        ],
+        "title": "HealthResponse"
+      },
+      "InfoResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "API name."
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version."
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Short description of the API."
+          },
+          "totalReports": {
+            "type": "integer",
+            "title": "Totalreports",
+            "description": "Total reports available."
+          },
+          "totalColumns": {
+            "type": "integer",
+            "title": "Totalcolumns",
+            "description": "Total columns in the source dataset."
+          },
+          "sourceFile": {
+            "type": "string",
+            "title": "Sourcefile",
+            "description": "Name of the source data file."
+          },
+          "coverage": {
+            "type": "string",
+            "title": "Coverage",
+            "description": "Geographic coverage."
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "description": "Author of the dataset."
+          },
+          "endpoints": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Endpoints",
+            "description": "List of available endpoint paths."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "description",
+          "totalReports",
+          "totalColumns",
+          "sourceFile",
+          "coverage",
+          "author",
+          "endpoints"
+        ],
+        "title": "InfoResponse"
+      },
+      "Laudo": {
+        "properties": {
+          "numeroLaudo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numerolaudo",
+            "description": "Unique CEF (SIMIL) report number, format AGENCIA.PREFIXO.SEQ/ANO.TEMPLATE-VERSAO."
+          },
+          "versaoLaudo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versaolaudo",
+            "description": "Report version (1, 2, 3...)."
+          },
+          "modeloLaudo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelolaudo",
+            "description": "Form model used, e.g. 'Simplificado'."
+          },
+          "grupoLaudo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grupolaudo",
+            "description": "Physical type of appraised property: 'Unidade em Prédio', 'Unidade Isolada Construção', 'Unidade Isolada Terreno'."
+          },
+          "grauSigilo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grausigilo",
+            "description": "Classification of secrecy, e.g. 'Restrito'."
+          },
+          "folhaTotal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Folhatotal",
+            "description": "Total pages of the PDF report."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Internal sequential ID of the report in this dataset."
+          },
+          "localizacao": {
+            "$ref": "#/components/schemas/LocationInfo",
+            "description": "Property location."
+          },
+          "coordenadas": {
+            "$ref": "#/components/schemas/CoordinatesInfo",
+            "description": "Geographic coordinates."
+          },
+          "cadMunicipal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cadmunicipal",
+            "description": "Municipal cadastre code."
+          },
+          "finalidade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalidade",
+            "description": "Purpose of the appraisal."
+          },
+          "objetivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Objetivo",
+            "description": "Objective of the appraisal."
+          },
+          "interessado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interessado",
+            "description": "Interested party."
+          },
+          "avaliacao": {
+            "$ref": "#/components/schemas/ValuationInfo",
+            "description": "Valuation results."
+          },
+          "responsavelTecnico": {
+            "$ref": "#/components/schemas/ResponsavelTecnicoInfo",
+            "description": "Technical responsible."
+          },
+          "empresa": {
+            "$ref": "#/components/schemas/EmpresaInfo",
+            "description": "Appraisal company."
+          },
+          "dataAssinatura": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataassinatura",
+            "description": "Signing date (DD/MM/YYYY)."
+          },
+          "matriculaImovel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matriculaimovel",
+            "description": "Property registry record."
+          },
+          "cnmImovel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnmimovel",
+            "description": "National Registry Code (CNM)."
+          },
+          "informacoesComplementares": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Informacoescomplementares",
+            "description": "Free-text complementary information."
+          },
+          "arquivoPdf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arquivopdf",
+            "description": "Original PDF file name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "localizacao",
+          "coordenadas",
+          "avaliacao",
+          "responsavelTecnico",
+          "empresa"
+        ],
+        "title": "Laudo",
+        "description": "Full representation of a Laudo."
+      },
+      "LaudoSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id",
+            "description": "Internal sequential ID of the report in this dataset."
+          },
+          "numeroLaudo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numerolaudo"
+          },
+          "categoriaImovel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoriaimovel"
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipio"
+          },
+          "bairro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bairro"
+          },
+          "dataReferenciaAvaliacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datareferenciaavaliacao"
+          },
+          "valorAvaliacaoReais": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valoravaliacaoreais"
+          },
+          "areaAvaliacaoM2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Areaavaliacaom2"
+          },
+          "arquivoPdf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arquivopdf",
+            "description": "Original PDF file name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "LaudoSummary",
+        "description": "Lightweight representation used in list responses."
+      },
+      "LocationInfo": {
+        "properties": {
+          "categoriaImovel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoriaimovel",
+            "description": "Property category: 'Apartamento', 'Casa', 'Lote'."
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf",
+            "description": "Federation unit (state).",
+            "examples": [
+              "MG"
+            ]
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Municipio",
+            "description": "Municipality name, uppercase."
+          },
+          "distritoLocalidadeCidade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distritolocalidadecidade",
+            "description": "Administrative district/locality."
+          },
+          "bairro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bairro",
+            "description": "Neighborhood."
+          },
+          "enderecoCompleto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enderecocompleto",
+            "description": "Full address text."
+          },
+          "cep": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cep",
+            "description": "Postal code (XX.XXX-XXX)."
+          }
+        },
+        "type": "object",
+        "title": "LocationInfo"
+      },
+      "MunicipioBreakdownItem": {
+        "properties": {
+          "municipio": {
+            "type": "string",
+            "title": "Municipio",
+            "description": "Municipality name."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of reports in this municipality."
+          },
+          "valorMedioReais": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valormedioreais",
+            "description": "Mean appraisal value in BRL."
+          }
+        },
+        "type": "object",
+        "required": [
+          "municipio",
+          "count"
+        ],
+        "title": "MunicipioBreakdownItem"
+      },
+      "PaginatedLaudos": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/LaudoSummary"
+            },
+            "type": "array",
+            "title": "Data",
+            "description": "List of laudo summaries for the current page."
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta",
+            "description": "Pagination metadata."
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "title": "PaginatedLaudos"
+      },
+      "PaginationMeta": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "Current page number (1-indexed)."
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Pagesize",
+            "description": "Number of items per page."
+          },
+          "totalItems": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Totalitems",
+            "description": "Total number of matching items."
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Totalpages",
+            "description": "Total number of pages."
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "pageSize",
+          "totalItems",
+          "totalPages"
+        ],
+        "title": "PaginationMeta"
+      },
+      "ResponsavelTecnicoInfo": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome",
+            "description": "Technical responsible's full name."
+          },
+          "formacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formacao",
+            "description": "Professional formation, e.g. 'ENG. CIVIL'."
+          },
+          "creaCau": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creacau",
+            "description": "CREA/CAU registration number."
+          },
+          "cpf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cpf",
+            "description": "CPF of the technical responsible (sensitive)."
+          }
+        },
+        "type": "object",
+        "title": "ResponsavelTecnicoInfo"
+      },
+      "StatPoint": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of items considered."
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min",
+            "description": "Minimum value."
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max",
+            "description": "Maximum value."
+          },
+          "mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean",
+            "description": "Arithmetic mean."
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median",
+            "description": "Median value."
+          }
+        },
+        "type": "object",
+        "required": [
+          "count"
+        ],
+        "title": "StatPoint"
+      },
+      "StatsResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of reports."
+          },
+          "porCategoria": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryBreakdownItem"
+            },
+            "type": "array",
+            "title": "Porcategoria",
+            "description": "Breakdown by property category."
+          },
+          "porMunicipio": {
+            "items": {
+              "$ref": "#/components/schemas/MunicipioBreakdownItem"
+            },
+            "type": "array",
+            "title": "Pormunicipio",
+            "description": "Breakdown by municipality."
+          },
+          "valores": {
+            "$ref": "#/components/schemas/ValorUnitarioStats",
+            "description": "Aggregate valuation statistics."
+          },
+          "periodo": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Periodo",
+            "description": "Min/max reference dates of the dataset."
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "porCategoria",
+          "porMunicipio",
+          "valores",
+          "periodo"
+        ],
+        "title": "StatsResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValorUnitarioStats": {
+        "properties": {
+          "reaisPorM2": {
+            "$ref": "#/components/schemas/StatPoint",
+            "description": "Statistics for valor_unitario_m2 (R$/m²)."
+          },
+          "valorAvaliacaoReais": {
+            "$ref": "#/components/schemas/StatPoint",
+            "description": "Statistics for valor_avaliacao_r (R$)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "reaisPorM2",
+          "valorAvaliacaoReais"
+        ],
+        "title": "ValorUnitarioStats"
+      },
+      "ValuationInfo": {
+        "properties": {
+          "metodoAvaliacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metodoavaliacao",
+            "description": "Appraisal method, e.g. 'Comparativo de Dados'."
+          },
+          "grauFundamentacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Graufundamentacao",
+            "description": "Foundation grade per NBR 14.653, e.g. 'Grau II'."
+          },
+          "grauPrecisao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grauprecisao",
+            "description": "Precision grade per NBR 14.653, e.g. 'Grau III'."
+          },
+          "tipoValorDeterminado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipovalordeterminado",
+            "description": "Type of determined value, e.g. 'Valor de Compra e Venda'."
+          },
+          "dataReferenciaAvaliacao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datareferenciaavaliacao",
+            "description": "Reference date (DD/MM/YYYY)."
+          },
+          "areaAvaliacaoM2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Areaavaliacaom2",
+            "description": "Evaluation base area, in m²."
+          },
+          "valorUnitarioM2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valorunitariom2",
+            "description": "Unit value in R$/m²."
+          },
+          "valorAvaliacaoReais": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valoravaliacaoreais",
+            "description": "Appraisal value in BRL (R$). Main target variable."
+          },
+          "valorAvaliacaoExtenso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valoravaliacaoextenso",
+            "description": "Appraisal value written out in Portuguese."
+          },
+          "valorMinimoAdmissivel": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valorminimoadmissivel",
+            "description": "Minimum admissible value per NBR 14.653-2 (often null)."
+          },
+          "valorMaximoAdmissivel": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valormaximoadmissivel",
+            "description": "Maximum admissible value per NBR 14.653-2 (often null)."
+          }
+        },
+        "type": "object",
+        "title": "ValuationInfo"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Service health and metadata endpoints."
+    },
+    {
+      "name": "Laudos",
+      "description": "Operations to list, filter and inspect real estate valuation reports (laudos) extracted from Caixa Econômica Federal PDFs."
+    }
+  ]
+}

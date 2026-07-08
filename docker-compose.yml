@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_laudos
+    ports:
+      - "8000:8000"
+    environment:
+      - LAUDOS_DATA_FILE=/app/data/laudos_completos.xlsx
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./app:/app/app
+      - ./laudos_completos.xlsx:/app/data/laudos_completos.xlsx:ro
+    command: >
+      bash -c "pip install -r requirements.txt &&
+               python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - api_network
+
+networks:
+  api_network:
+    driver: bridge

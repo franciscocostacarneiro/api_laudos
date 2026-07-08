@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: api_laudos
+    runtime: python
+    plan: standard
+    pythonVersion: 3.11
+    
+    # Build command
+    buildCommand: pip install -r requirements.txt
+    
+    # Start command
+    startCommand: gunicorn --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker --timeout 120 app.main:app
+    
+    # Environment variables
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: LAUDOS_DATA_FILE
+        value: /var/data/laudos_completos.xlsx
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Port
+    port: 8000
+
+# Note: You need to:
+# 1. Upload laudos_completos.xlsx via Render dashboard under "Files"
+# 2. Or store it in a cloud storage (S3) and configure the path via environment variable
