@@ -13,6 +13,17 @@ Belo Horizonte (MG), Brazil. Designed following the skills in `.llm/SKILLS/`:
 
 ---
 
+## 🚀 API em Produção
+
+✅ **Hospedada em Replit**  
+📍 **URL:** https://api-laudos--chicoilha.replit.com  
+📚 **Swagger UI:** https://api-laudos--chicoilha.replit.com/docs  
+❤️ **Health:** https://api-laudos--chicoilha.replit.com/health  
+
+[→ Ver status em produção](./PRODUCTION_STATUS.md)
+
+---
+
 ## 1. Quickstart
 
 ### Requirements
